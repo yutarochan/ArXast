@@ -10,39 +10,44 @@ import argparse
 from gtts import gTTS
 from bs4 import BeautifulSoup
 
+# TTS Lib: https://github.com/desbma/GoogleSpeech
+
 def parse_args():
     return None
 
+# Parse Paper and Build Script Dictionary
 def parse_paper(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.text, 'lxml')
 
-    full_text = ''
+    script_dict = {}
 
     # Paper Metadata
-    title = soup.findAll("h1", {"class": "ltx_title"})[0].text
-    authors = None
+    script_dict['title'] = soup.findAll("h1", {"class": "ltx_title"})[0].text
+    script_dict['author'] = None
 
     # Extract Abstract
-    abstract = list(soup.find('div', {'class': 'ltx_abstract'}).children)[3].text
+    script_dict['abstract'] = list(soup.find('div', {'class': 'ltx_abstract'}).children)[3].text
 
     # Extract Sections
     brem = lambda x: re.sub("[\[].*?[\]]", "", x)
     sections = soup.find_all('section', {'class': 'ltx_section'})
 
-    # Process Script
-    full_text += title + '\n'
-    full_text += 'Abstract\n' + abstract + '\n'
+    # Extract Section Content
+    script_dict['body'] = {}
+    script_dict['body']['sec_title'] = []
+    script_dict['body']['sec_content'] = []
 
-    for idx, sec in enumerate(sections):
+    for sec in sections:
         # Parse Content
-        sect_title = ' '.join(sec.findAll('h2', {'class': 'ltx_title_section'})[0].text.split(' ')[1:]).replace('\n', '')
-        sect_text = ' '.join(list(map(lambda x: x.text, sec.findAll('p'))))
+        script_dict['body']['sec_title'].append(' '.join(sec.findAll('h2', {'class': 'ltx_title_section'})[0].text.split(' ')[1:]).replace('\n', ''))
+        script_dict['body']['sec_content'].append(' '.join(list(map(lambda x: x.text, sec.findAll('p')))))
 
-        # Append Script
-        full_text += 'Section ' + str(int(idx + 1)) + '.\n'
-        full_text += sect_title + '\n'
-        full_text += sect_text + '\n\n'
+    return script_dict
+
+# Build Audio from Script Dictionary
+def build_audio(script, output):
+    return None
 
     # Generate Audio
     tts = gTTS(full_text)
